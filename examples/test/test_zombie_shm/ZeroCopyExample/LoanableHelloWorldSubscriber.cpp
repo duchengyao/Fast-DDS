@@ -21,11 +21,11 @@
 using namespace eprosima::fastdds::dds;
 
 LoanableHelloWorldSubscriber::LoanableHelloWorldSubscriber()
-    : participant_(nullptr),
-      subscriber_(nullptr),
-      topic_(nullptr),
-      reader_(nullptr),
-      type_(new LoanableHelloWorldPubSubType()) {
+        : participant_(nullptr),
+          subscriber_(nullptr),
+          topic_(nullptr),
+          reader_(nullptr),
+          type_(new LoanableHelloWorldPubSubType()) {
 }
 
 LoanableHelloWorldSubscriber::~LoanableHelloWorldSubscriber() {
@@ -39,104 +39,107 @@ LoanableHelloWorldSubscriber::~LoanableHelloWorldSubscriber() {
 //    participant_->delete_subscriber(subscriber_);
 //  }
 //  DomainParticipantFactory::get_instance()->delete_participant(participant_);
+    std::cout << "ssssssssssssssssssssssss" << std::endl;
 }
 
 bool LoanableHelloWorldSubscriber::init() {
-  //CREATE THE PARTICIPANT
-  DomainParticipantQos pqos;
-  pqos.name("Participant_sub");
-  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
+    //CREATE THE PARTICIPANT
+    DomainParticipantQos pqos;
+    pqos.name("Participant_sub");
+    participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
 //  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
 
 //  DomainParticipantFactory::get_instance()->delete_participant(participant_);
 
-  if (participant_ == nullptr) {
-    return false;
-  }
+    if (participant_ == nullptr) {
+        return false;
+    }
 
-  //REGISTER THE TYPE
-  type_.register_type(participant_);
+    //REGISTER THE TYPE
+    type_.register_type(participant_);
 
-  //CREATE THE SUBSCRIBER
-  subscriber_ = participant_->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
-  if (subscriber_ == nullptr) {
-    return false;
-  }
+    //CREATE THE SUBSCRIBER
+    subscriber_ = participant_->create_subscriber(SUBSCRIBER_QOS_DEFAULT, nullptr);
+    if (subscriber_ == nullptr) {
+        return false;
+    }
 
-  //CREATE THE TOPIC
-  topic_ = participant_->create_topic(
-      "LoanableHelloWorldTopic",
-      type_.get_type_name(),
-      TOPIC_QOS_DEFAULT);
-  if (topic_ == nullptr) {
-    return false;
-  }
+    //CREATE THE TOPIC
+    topic_ = participant_->create_topic(
+            "LoanableHelloWorldTopic",
+            type_.get_type_name(),
+            TOPIC_QOS_DEFAULT);
+    if (topic_ == nullptr) {
+        return false;
+    }
 
-  //CREATE THE READER
-  DataReaderQos rqos = subscriber_->get_default_datareader_qos();
-  rqos.history().depth = 1;
-  rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
-  rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
-  rqos.data_sharing().automatic();
-  reader_ = subscriber_->create_datareader(topic_, rqos, &listener_);
-  if (reader_ == nullptr) {
-    return false;
-  }
+    //CREATE THE READER
+    DataReaderQos rqos = subscriber_->get_default_datareader_qos();
+    rqos.history().depth = 1;
+    rqos.reliability().kind = RELIABLE_RELIABILITY_QOS;
+    rqos.durability().kind = TRANSIENT_LOCAL_DURABILITY_QOS;
+    rqos.data_sharing().automatic();
+    reader_ = subscriber_->create_datareader(topic_, rqos, &listener_);
+    if (reader_ == nullptr) {
+        return false;
+    }
 
-  return true;
+    return true;
 }
 
 void LoanableHelloWorldSubscriber::SubListener::on_subscription_matched(
-    DataReader*,
-    const SubscriptionMatchedStatus& info) {
-  if (info.current_count_change == 1) {
-    matched = info.total_count;
-    std::cout << "Subscriber matched." << std::endl;
-  } else if (info.current_count_change == -1) {
-    matched = info.total_count;
-    std::cout << "Subscriber unmatched." << std::endl;
-  } else {
-    std::cout << info.current_count_change
-              << " is not a valid value for SubscriptionMatchedStatus current count change" << std::endl;
-  }
+        DataReader *,
+        const SubscriptionMatchedStatus &info) {
+    if (info.current_count_change == 1) {
+        matched = info.total_count;
+        std::cout << "Subscriber matched." << std::endl;
+    } else if (info.current_count_change == -1) {
+        matched = info.total_count;
+        std::cout << "Subscriber unmatched." << std::endl;
+    } else {
+        std::cout << info.current_count_change
+                  << " is not a valid value for SubscriptionMatchedStatus current count change" << std::endl;
+    }
 }
 
 void LoanableHelloWorldSubscriber::SubListener::on_data_available(
-    DataReader* reader) {
-  FASTDDS_CONST_SEQUENCE(DataSeq, LoanableHelloWorld);
+        DataReader *reader) {
+    FASTDDS_CONST_SEQUENCE(DataSeq, LoanableHelloWorld);
 
-  DataSeq data;
-  SampleInfoSeq infos;
-  while (ReturnCode_t::RETCODE_OK == reader->take(data, infos)) {
-    for (LoanableCollection::size_type i = 0; i < infos.length(); ++i) {
-      if (infos[i].valid_data) {
-        // Print your structure data here.
-        const LoanableHelloWorld& sample = data[i];
+    DataSeq data;
+    SampleInfoSeq infos;
+    while (ReturnCode_t::RETCODE_OK == reader->take(data, infos)) {
+        for (LoanableCollection::size_type i = 0; i < infos.length(); ++i) {
+            if (infos[i].valid_data) {
+                // Print your structure data here.
+                const LoanableHelloWorld &sample = data[i];
+                ++samples;
+                std::cout << "Sample received (count=" << samples << ") at address " << &sample
+                          << (reader->is_sample_valid(&sample, &infos[i]) ? " is valid" : " was replaced") << std::endl
+                          << "  index=" << sample.index() << std::endl
+                          << "  message=" << sample.message().data() << std::endl;
 
-        ++samples;
-        std::cout << "Sample received (count=" << samples << ") at address " << &sample
-                  << (reader->is_sample_valid(&sample, &infos[i]) ? " is valid" : " was replaced") << std::endl
-                  << "  index=" << sample.index() << std::endl
-                  << "  message=" << sample.message().data() << std::endl;
-      }
+//                std::this_thread::sleep_for(std::chrono::seconds(100));
+
+            }
+        }
+        reader->return_loan(data, infos);
     }
-    reader->return_loan(data, infos);
-  }
 }
 
 LoanableHelloWorldSubscriber loanable_hello_world_subscriber;
 
 void signal_handler(int sig) {
-  std::cout << "signal " << sig;
+    std::cout << "signal " << sig;
 //  loanable_hello_world_subscriber.~LoanableHelloWorldSubscriber();
-  exit(1);
+    exit(1);
 }
 
 int main() {
-  for (auto i = 0; i <= 31; i++) {
-    signal(i, signal_handler);
-  }
+    for (auto i = 0; i <= 31; i++) {
+        signal(i, signal_handler);
+    }
 
-  loanable_hello_world_subscriber.init();
-  std::this_thread::sleep_for(std::chrono::hours(10));
+    loanable_hello_world_subscriber.init();
+    std::this_thread::sleep_for(std::chrono::hours(10));
 }
