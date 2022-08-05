@@ -1,4 +1,4 @@
-# Copyright 2016 Proyectos y Sistemas de Mantenimiento SL (eProsima).
+# Copyright 2019 Proyectos y Sistemas de Mantenimiento SL (eProsima).
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,7 +12,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set(fastrtps_FOUND TRUE)
-#add_subdirectory(cpp/dds)
-#add_subdirectory(cpp/rtps)
-add_subdirectory(test/test_zombie_shm)
+add_subdirectory(HelloWorldExample)
+add_subdirectory(HelloWorldExampleDataSharing)
+add_subdirectory(HelloWorldExampleSharedMem)
+add_subdirectory(HistoryKind)
+add_subdirectory(LifespanQoSExample)
+add_subdirectory(LivelinessQoS)
+add_subdirectory(WriterLoansExample)
+add_subdirectory(ZeroCopyExample)
+add_subdirectory(MutexOwnerDeadTest)
+
+if(SECURITY)
+    add_subdirectory(SecureHelloWorldExample)
+endif()
