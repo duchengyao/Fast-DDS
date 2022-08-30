@@ -1114,6 +1114,7 @@ CDRMessage_t PDP::get_participant_proxy_data_serialized(
     return cdr_msg;
 }
 
+//! Here!
 ParticipantProxyData* PDP::get_participant_proxy_data(
         const GuidPrefix_t& guid_prefix)
 {
