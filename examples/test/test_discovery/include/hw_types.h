@@ -26,7 +26,7 @@
 #include "fastdds/dds/topic/TopicDataType.hpp"
 #include "fastrtps/utils/md5.h"
 
-#include "LoanableHelloWorld.h"
+#include "../common/hw.h"
 
 #if !defined(GEN_API_VER) || (GEN_API_VER != 1)
 #error \
@@ -41,7 +41,7 @@ class LoanableHelloWorldPubSubType : public eprosima::fastdds::dds::TopicDataTyp
 {
 public:
 
-    typedef LoanableHelloWorld type;
+    typedef HW type;
 
     eProsima_user_DllExport LoanableHelloWorldPubSubType();
 
@@ -88,7 +88,7 @@ public:
     eProsima_user_DllExport inline bool construct_sample(
             void* memory) const override
     {
-        new (memory) LoanableHelloWorld();
+        new (memory) HW();
         return true;
     }
 

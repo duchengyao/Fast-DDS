@@ -23,7 +23,7 @@
 #include <fastcdr/FastBuffer.h>
 #include <fastcdr/Cdr.h>
 
-#include "LoanableHelloWorldPubSubTypes.h"
+#include "../include/hw_types.h"
 
 using SerializedPayload_t = eprosima::fastrtps::rtps::SerializedPayload_t;
 using InstanceHandle_t = eprosima::fastrtps::rtps::InstanceHandle_t;
@@ -31,12 +31,12 @@ using InstanceHandle_t = eprosima::fastrtps::rtps::InstanceHandle_t;
 LoanableHelloWorldPubSubType::LoanableHelloWorldPubSubType()
 {
     setName("LoanableHelloWorld");
-    auto type_size = LoanableHelloWorld::getMaxCdrSerializedSize();
+    auto type_size = HW::getMaxCdrSerializedSize();
     type_size += eprosima::fastcdr::Cdr::alignment(type_size, 4); /* possible submessage alignment */
     m_typeSize = static_cast<uint32_t>(type_size) + 4; /*encapsulation*/
-    m_isGetKeyDefined = LoanableHelloWorld::isKeyDefined();
-    size_t keyLength = LoanableHelloWorld::getKeyMaxCdrSerializedSize() > 16 ?
-            LoanableHelloWorld::getKeyMaxCdrSerializedSize() : 16;
+    m_isGetKeyDefined = HW::isKeyDefined();
+    size_t keyLength = HW::getKeyMaxCdrSerializedSize() > 16 ?
+                       HW::getKeyMaxCdrSerializedSize() : 16;
     m_keyBuffer = reinterpret_cast<unsigned char*>(malloc(keyLength));
     memset(m_keyBuffer, 0, keyLength);
 }
@@ -53,7 +53,7 @@ bool LoanableHelloWorldPubSubType::serialize(
         void* data,
         SerializedPayload_t* payload)
 {
-    LoanableHelloWorld* p_type = static_cast<LoanableHelloWorld*>(data);
+    HW* p_type = static_cast<HW*>(data);
 
     // Object that manages the raw buffer.
     eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(payload->data), payload->max_size);
@@ -85,7 +85,7 @@ bool LoanableHelloWorldPubSubType::deserialize(
     try
     {
         //Convert DATA to pointer of your type
-        LoanableHelloWorld* p_type = static_cast<LoanableHelloWorld*>(data);
+        HW* p_type = static_cast<HW*>(data);
 
         // Object that manages the raw buffer.
         eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(payload->data), payload->length);
@@ -113,20 +113,20 @@ std::function<uint32_t()> LoanableHelloWorldPubSubType::getSerializedSizeProvide
 {
     return [data]() -> uint32_t
            {
-               return static_cast<uint32_t>(type::getCdrSerializedSize(*static_cast<LoanableHelloWorld*>(data))) +
+               return static_cast<uint32_t>(type::getCdrSerializedSize(*static_cast<HW*>(data))) +
                       4u /*encapsulation*/;
            };
 }
 
 void* LoanableHelloWorldPubSubType::createData()
 {
-    return reinterpret_cast<void*>(new LoanableHelloWorld());
+    return reinterpret_cast<void*>(new HW());
 }
 
 void LoanableHelloWorldPubSubType::deleteData(
         void* data)
 {
-    delete(reinterpret_cast<LoanableHelloWorld*>(data));
+    delete(reinterpret_cast<HW*>(data));
 }
 
 bool LoanableHelloWorldPubSubType::getKey(
@@ -139,16 +139,16 @@ bool LoanableHelloWorldPubSubType::getKey(
         return false;
     }
 
-    LoanableHelloWorld* p_type = static_cast<LoanableHelloWorld*>(data);
+    HW* p_type = static_cast<HW*>(data);
 
     // Object that manages the raw buffer.
     eprosima::fastcdr::FastBuffer fastbuffer(reinterpret_cast<char*>(m_keyBuffer),
-            LoanableHelloWorld::getKeyMaxCdrSerializedSize());
+                                             HW::getKeyMaxCdrSerializedSize());
 
     // Object that serializes the data.
     eprosima::fastcdr::Cdr ser(fastbuffer, eprosima::fastcdr::Cdr::BIG_ENDIANNESS);
     p_type->serializeKey(ser);
-    if (force_md5 || LoanableHelloWorld::getKeyMaxCdrSerializedSize() > 16)
+    if (force_md5 || HW::getKeyMaxCdrSerializedSize() > 16)
     {
         m_md5.init();
         m_md5.update(m_keyBuffer, static_cast<unsigned int>(ser.getSerializedDataLength()));

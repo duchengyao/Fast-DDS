@@ -7,10 +7,8 @@
  */
 
 
-#include "LoanableHelloWorldPublisher.h"
-#include "LoanableHelloWorldPubSubTypes.h"
+#include "include/hw_pub.h"
 
-#include "fastdds/dds/domain/DomainParticipantFactory.hpp"
 #include "fastdds/dds/publisher/Publisher.hpp"
 #include "fastdds/dds/publisher/qos/PublisherQos.hpp"
 #include "fastdds/dds/publisher/DataWriter.hpp"
@@ -21,28 +19,9 @@
 
 using namespace eprosima::fastdds::dds;
 
-LoanableHelloWorldPublisher::LoanableHelloWorldPublisher()
-    : participant_(nullptr),
-      publisher_(nullptr),
-      topic_(nullptr),
-      writer_(nullptr),
-      type_(new LoanableHelloWorldPubSubType()) {
-}
 
-LoanableHelloWorldPublisher::~LoanableHelloWorldPublisher() {
-  if (writer_ != nullptr) {
-    publisher_->delete_datawriter(writer_);
-  }
-  if (publisher_ != nullptr) {
-    participant_->delete_publisher(publisher_);
-  }
-  if (topic_ != nullptr) {
-    participant_->delete_topic(topic_);
-  }
-  DomainParticipantFactory::get_instance()->delete_participant(participant_);
-}
 
-bool LoanableHelloWorldPublisher::init() {
+bool HWPub::init() {
   /* Initialize data_ here */
 
   //CREATE THE PARTICIPANT
@@ -85,7 +64,7 @@ bool LoanableHelloWorldPublisher::init() {
   return true;
 }
 
-void LoanableHelloWorldPublisher::PubListener::on_publication_matched(
+void HWPub::PubListener::on_publication_matched(
     eprosima::fastdds::dds::DataWriter*,
     const eprosima::fastdds::dds::PublicationMatchedStatus& info) {
   if (info.current_count_change == 1) {
@@ -100,7 +79,7 @@ void LoanableHelloWorldPublisher::PubListener::on_publication_matched(
   }
 }
 
-void LoanableHelloWorldPublisher::run() {
+void HWPub::run() {
   std::cout << "LoanableHelloWorld DataWriter waiting for DataReaders." << std::endl;
   int msgsent = 0;
 
@@ -110,7 +89,7 @@ void LoanableHelloWorldPublisher::run() {
     void* sample = nullptr;
     if (ReturnCode_t::RETCODE_OK == writer_->loan_sample(sample)) {
       std::cout << "Preparing sample at address " << sample << std::endl;
-      auto* data = static_cast<LoanableHelloWorld*>(sample);
+      auto* data = static_cast<HW*>(sample);
       data->index() = msgsent + 1;
       memcpy(data->message().data(), "LoanableHelloWorld ", 20);
       writer_->write(sample);
@@ -122,7 +101,7 @@ void LoanableHelloWorldPublisher::run() {
 }
 
 int main() {
-  LoanableHelloWorldPublisher loanable_hello_world_publisher;
+  HWPub loanable_hello_world_publisher;
   loanable_hello_world_publisher.init();
   loanable_hello_world_publisher.run();
 }

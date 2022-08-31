@@ -65,61 +65,61 @@ class Cdr;
  * @brief This class represents the structure LoanableHelloWorld defined by the user in the IDL file.
  * @ingroup LOANABLEHELLOWORLD
  */
-class LoanableHelloWorld
+class HW
 {
 public:
 
     /*!
      * @brief Default constructor.
      */
-    eProsima_user_DllExport LoanableHelloWorld();
+    eProsima_user_DllExport HW();
 
     /*!
      * @brief Default destructor.
      */
-    eProsima_user_DllExport ~LoanableHelloWorld();
+    eProsima_user_DllExport ~HW();
 
     /*!
      * @brief Copy constructor.
      * @param x Reference to the object LoanableHelloWorld that will be copied.
      */
-    eProsima_user_DllExport LoanableHelloWorld(
-            const LoanableHelloWorld& x);
+    eProsima_user_DllExport HW(
+            const HW& x);
 
     /*!
      * @brief Move constructor.
      * @param x Reference to the object LoanableHelloWorld that will be copied.
      */
-    eProsima_user_DllExport LoanableHelloWorld(
-            LoanableHelloWorld&& x);
+    eProsima_user_DllExport HW(
+      HW&& x);
 
     /*!
      * @brief Copy assignment.
      * @param x Reference to the object LoanableHelloWorld that will be copied.
      */
-    eProsima_user_DllExport LoanableHelloWorld& operator =(
-            const LoanableHelloWorld& x);
+    eProsima_user_DllExport HW& operator =(
+            const HW& x);
 
     /*!
      * @brief Move assignment.
      * @param x Reference to the object LoanableHelloWorld that will be copied.
      */
-    eProsima_user_DllExport LoanableHelloWorld& operator =(
-            LoanableHelloWorld&& x);
+    eProsima_user_DllExport HW& operator =(
+      HW&& x);
 
     /*!
      * @brief Comparison operator.
      * @param x LoanableHelloWorld object to compare.
      */
     eProsima_user_DllExport bool operator ==(
-            const LoanableHelloWorld& x) const;
+            const HW& x) const;
 
     /*!
      * @brief Comparison operator.
      * @param x LoanableHelloWorld object to compare.
      */
     eProsima_user_DllExport bool operator !=(
-            const LoanableHelloWorld& x) const;
+            const HW& x) const;
 
     /*!
      * @brief This function sets a value in member index
@@ -182,7 +182,7 @@ public:
      * @return Serialized size.
      */
     eProsima_user_DllExport static size_t getCdrSerializedSize(
-            const LoanableHelloWorld& data,
+            const HW& data,
             size_t current_alignment = 0);
 
 

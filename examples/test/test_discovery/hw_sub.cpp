@@ -9,39 +9,19 @@
 #include <csignal>
 #include <cstdlib>
 
-#include "fastdds/dds/domain/DomainParticipantFactory.hpp"
 #include "fastdds/dds/subscriber/DataReader.hpp"
 #include "fastdds/dds/subscriber/SampleInfo.hpp"
 #include "fastdds/dds/subscriber/Subscriber.hpp"
 #include "fastdds/dds/subscriber/qos/DataReaderQos.hpp"
 
-#include "LoanableHelloWorldSubscriber.h"
-#include "LoanableHelloWorldPubSubTypes.h"
+#include "include/hw_sub.h"
+
 
 using namespace eprosima::fastdds::dds;
 
-LoanableHelloWorldSubscriber::LoanableHelloWorldSubscriber()
-    : participant_(nullptr),
-      subscriber_(nullptr),
-      topic_(nullptr),
-      reader_(nullptr),
-      type_(new LoanableHelloWorldPubSubType()) {
-}
 
-LoanableHelloWorldSubscriber::~LoanableHelloWorldSubscriber() {
-//  if (reader_ != nullptr) {
-//    subscriber_->delete_datareader(reader_);
-//  }
-//  if (topic_ != nullptr) {
-//    participant_->delete_topic(topic_);
-//  }
-//  if (subscriber_ != nullptr) {
-//    participant_->delete_subscriber(subscriber_);
-//  }
-//  DomainParticipantFactory::get_instance()->delete_participant(participant_);
-}
 
-bool LoanableHelloWorldSubscriber::init() {
+bool HWSub::init() {
   //CREATE THE PARTICIPANT
   DomainParticipantQos pqos;
   pqos.name("Participant_sub");
@@ -86,7 +66,7 @@ bool LoanableHelloWorldSubscriber::init() {
   return true;
 }
 
-void LoanableHelloWorldSubscriber::SubListener::on_subscription_matched(
+void HWSub::SubListener::on_subscription_matched(
     DataReader*,
     const SubscriptionMatchedStatus& info) {
   if (info.current_count_change == 1) {
@@ -101,9 +81,9 @@ void LoanableHelloWorldSubscriber::SubListener::on_subscription_matched(
   }
 }
 
-void LoanableHelloWorldSubscriber::SubListener::on_data_available(
+void HWSub::SubListener::on_data_available(
     DataReader* reader) {
-  FASTDDS_CONST_SEQUENCE(DataSeq, LoanableHelloWorld);
+  FASTDDS_CONST_SEQUENCE(DataSeq, HW);
 
   DataSeq data;
   SampleInfoSeq infos;
@@ -111,7 +91,7 @@ void LoanableHelloWorldSubscriber::SubListener::on_data_available(
     for (LoanableCollection::size_type i = 0; i < infos.length(); ++i) {
       if (infos[i].valid_data) {
         // Print your structure data here.
-        const LoanableHelloWorld& sample = data[i];
+        const HW& sample = data[i];
 
         ++samples;
         std::cout << "Sample received (count=" << samples << ") at address " << &sample
@@ -124,7 +104,7 @@ void LoanableHelloWorldSubscriber::SubListener::on_data_available(
   }
 }
 
-LoanableHelloWorldSubscriber loanable_hello_world_subscriber;
+HWSub loanable_hello_world_subscriber;
 
 void signal_handler(int sig) {
   std::cout << "signal " << sig;

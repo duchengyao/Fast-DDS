@@ -23,15 +23,36 @@
 #ifndef _LOANABLEHELLOWORLD_SUBSCRIBER_H_
 #define _LOANABLEHELLOWORLD_SUBSCRIBER_H_
 
+#include "hw_types.h"
+
+#include "fastdds/dds/domain/DomainParticipantFactory.hpp"
 #include "fastdds/dds/domain/DomainParticipant.hpp"
 #include "fastdds/dds/subscriber/DataReader.hpp"
 #include "fastdds/dds/subscriber/DataReaderListener.hpp"
 #include "fastdds/dds/subscriber/Subscriber.hpp"
 
-class LoanableHelloWorldSubscriber {
+class HWSub {
  public:
-  LoanableHelloWorldSubscriber();
-  virtual ~LoanableHelloWorldSubscriber();
+  HWSub()
+      : participant_(nullptr),
+        subscriber_(nullptr),
+        topic_(nullptr),
+        reader_(nullptr),
+        type_(new LoanableHelloWorldPubSubType()) {
+  }
+
+  ~HWSub() {
+    if (reader_ != nullptr) {
+      subscriber_->delete_datareader(reader_);
+    }
+    if (topic_ != nullptr) {
+      participant_->delete_topic(topic_);
+    }
+    if (subscriber_ != nullptr) {
+      participant_->delete_subscriber(subscriber_);
+    }
+    eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->delete_participant(participant_);
+  }
   bool init();
 
  private:

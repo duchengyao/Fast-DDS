@@ -37,16 +37,16 @@ endif ()
 message(STATUS "Configuring ZeroCopyExample...")
 file(GLOB DDS_ZERO_COPY_EXAMPLE_SOURCES_CXX "common/*.cxx")
 
-add_executable(test_zombie_pub ${DDS_ZERO_COPY_EXAMPLE_SOURCES_CXX} hw_pub.cpp)
-target_compile_definitions(test_zombie_pub PRIVATE
+add_executable(test_discovery_pub ${DDS_ZERO_COPY_EXAMPLE_SOURCES_CXX} hw_pub.cpp)
+target_compile_definitions(test_discovery_pub PRIVATE
         $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
         $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
         )
-target_link_libraries(test_zombie_pub fastrtps fastcdr)
+target_link_libraries(test_discovery_pub fastrtps fastcdr)
 
-add_executable(test_zombie_sub ${DDS_ZERO_COPY_EXAMPLE_SOURCES_CXX} hw_sub.cpp)
-target_compile_definitions(test_zombie_sub PRIVATE
+add_executable(test_discovery_sub ${DDS_ZERO_COPY_EXAMPLE_SOURCES_CXX} hw_sub.cpp)
+target_compile_definitions(test_discovery_sub PRIVATE
         $<$<AND:$<NOT:$<BOOL:${WIN32}>>,$<STREQUAL:"${CMAKE_BUILD_TYPE}","Debug">>:__DEBUG>
         $<$<BOOL:${INTERNAL_DEBUG}>:__INTERNALDEBUG> # Internal debug activated.
         )
-target_link_libraries(test_zombie_sub fastrtps fastcdr)
+target_link_libraries(test_discovery_sub fastrtps fastcdr)

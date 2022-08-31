@@ -26,7 +26,7 @@ char dummy;
 }  // namespace
 #endif  // _WIN32
 
-#include "LoanableHelloWorld.h"
+#include "hw.h"
 #include <fastcdr/Cdr.h>
 
 #include <fastcdr/exceptions/BadParamException.h>
@@ -34,7 +34,7 @@ using namespace eprosima::fastcdr::exception;
 
 #include <utility>
 
-LoanableHelloWorld::LoanableHelloWorld()
+HW::HW()
 {
     // m_index com.eprosima.idl.parser.typecode.PrimitiveTypeCode@51c8530f
     m_index = 0;
@@ -43,28 +43,28 @@ LoanableHelloWorld::LoanableHelloWorld()
 
 }
 
-LoanableHelloWorld::~LoanableHelloWorld()
+HW::~HW()
 {
 
 
 }
 
-LoanableHelloWorld::LoanableHelloWorld(
-        const LoanableHelloWorld& x)
+HW::HW(
+        const HW& x)
 {
     m_index = x.m_index;
     m_message = x.m_message;
 }
 
-LoanableHelloWorld::LoanableHelloWorld(
-        LoanableHelloWorld&& x)
+HW::HW(
+    HW&& x)
 {
     m_index = x.m_index;
     m_message = std::move(x.m_message);
 }
 
-LoanableHelloWorld& LoanableHelloWorld::operator =(
-        const LoanableHelloWorld& x)
+HW& HW::operator =(
+        const HW& x)
 {
 
     m_index = x.m_index;
@@ -73,8 +73,8 @@ LoanableHelloWorld& LoanableHelloWorld::operator =(
     return *this;
 }
 
-LoanableHelloWorld& LoanableHelloWorld::operator =(
-        LoanableHelloWorld&& x)
+HW& HW::operator =(
+    HW&& x)
 {
 
     m_index = x.m_index;
@@ -83,20 +83,20 @@ LoanableHelloWorld& LoanableHelloWorld::operator =(
     return *this;
 }
 
-bool LoanableHelloWorld::operator ==(
-        const LoanableHelloWorld& x) const
+bool HW::operator ==(
+        const HW& x) const
 {
 
     return (m_index == x.m_index && m_message == x.m_message);
 }
 
-bool LoanableHelloWorld::operator !=(
-        const LoanableHelloWorld& x) const
+bool HW::operator !=(
+        const HW& x) const
 {
     return !(*this == x);
 }
 
-size_t LoanableHelloWorld::getMaxCdrSerializedSize(
+size_t HW::getMaxCdrSerializedSize(
         size_t current_alignment)
 {
     size_t initial_alignment = current_alignment;
@@ -112,8 +112,8 @@ size_t LoanableHelloWorld::getMaxCdrSerializedSize(
     return current_alignment - initial_alignment;
 }
 
-size_t LoanableHelloWorld::getCdrSerializedSize(
-        const LoanableHelloWorld& data,
+size_t HW::getCdrSerializedSize(
+        const HW& data,
         size_t current_alignment)
 {
     (void)data;
@@ -129,7 +129,7 @@ size_t LoanableHelloWorld::getCdrSerializedSize(
     return current_alignment - initial_alignment;
 }
 
-void LoanableHelloWorld::serialize(
+void HW::serialize(
         eprosima::fastcdr::Cdr& scdr) const
 {
 
@@ -139,7 +139,7 @@ void LoanableHelloWorld::serialize(
 
 }
 
-void LoanableHelloWorld::deserialize(
+void HW::deserialize(
         eprosima::fastcdr::Cdr& dcdr)
 {
 
@@ -152,7 +152,7 @@ void LoanableHelloWorld::deserialize(
  * @brief This function sets a value in member index
  * @param _index New value for member index
  */
-void LoanableHelloWorld::index(
+void HW::index(
         uint32_t _index)
 {
     m_index = _index;
@@ -162,7 +162,7 @@ void LoanableHelloWorld::index(
  * @brief This function returns the value of member index
  * @return Value of member index
  */
-uint32_t LoanableHelloWorld::index() const
+uint32_t HW::index() const
 {
     return m_index;
 }
@@ -171,7 +171,7 @@ uint32_t LoanableHelloWorld::index() const
  * @brief This function returns a reference to member index
  * @return Reference to member index
  */
-uint32_t& LoanableHelloWorld::index()
+uint32_t& HW::index()
 {
     return m_index;
 }
@@ -180,7 +180,7 @@ uint32_t& LoanableHelloWorld::index()
  * @brief This function copies the value in member message
  * @param _message New value to be copied in member message
  */
-void LoanableHelloWorld::message(
+void HW::message(
         const std::array<char, 256>& _message)
 {
     m_message = _message;
@@ -190,7 +190,7 @@ void LoanableHelloWorld::message(
  * @brief This function moves the value in member message
  * @param _message New value to be moved in member message
  */
-void LoanableHelloWorld::message(
+void HW::message(
         std::array<char, 256>&& _message)
 {
     m_message = std::move(_message);
@@ -200,7 +200,7 @@ void LoanableHelloWorld::message(
  * @brief This function returns a constant reference to member message
  * @return Constant reference to member message
  */
-const std::array<char, 256>& LoanableHelloWorld::message() const
+const std::array<char, 256>& HW::message() const
 {
     return m_message;
 }
@@ -209,12 +209,12 @@ const std::array<char, 256>& LoanableHelloWorld::message() const
  * @brief This function returns a reference to member message
  * @return Reference to member message
  */
-std::array<char, 256>& LoanableHelloWorld::message()
+std::array<char, 256>& HW::message()
 {
     return m_message;
 }
 
-size_t LoanableHelloWorld::getKeyMaxCdrSerializedSize(
+size_t HW::getKeyMaxCdrSerializedSize(
         size_t current_alignment)
 {
     size_t current_align = current_alignment;
@@ -226,12 +226,12 @@ size_t LoanableHelloWorld::getKeyMaxCdrSerializedSize(
     return current_align;
 }
 
-bool LoanableHelloWorld::isKeyDefined()
+bool HW::isKeyDefined()
 {
     return false;
 }
 
-void LoanableHelloWorld::serializeKey(
+void HW::serializeKey(
         eprosima::fastcdr::Cdr& scdr) const
 {
     (void) scdr;

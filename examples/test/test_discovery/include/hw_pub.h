@@ -23,19 +23,39 @@
 #ifndef _LOANABLEHELLOWORLD_PUBLISHER_H_
 #define _LOANABLEHELLOWORLD_PUBLISHER_H_
 
+#include "hw_types.h"
+
+#include "fastdds/dds/domain/DomainParticipantFactory.hpp"
 #include "fastdds/dds/domain/DomainParticipant.hpp"
 #include "fastdds/dds/publisher/DataWriter.hpp"
 #include "fastdds/dds/publisher/DataWriterListener.hpp"
 #include "fastdds/dds/publisher/Publisher.hpp"
 #include "fastdds/dds/topic/TypeSupport.hpp"
 
-class LoanableHelloWorldPublisher
+class HWPub
 {
 public:
 
-    LoanableHelloWorldPublisher();
+  HWPub()
+      : participant_(nullptr),
+        publisher_(nullptr),
+        topic_(nullptr),
+        writer_(nullptr),
+        type_(new LoanableHelloWorldPubSubType()) {
+  }
 
-    virtual ~LoanableHelloWorldPublisher();
+  virtual ~HWPub() {
+    if (writer_ != nullptr) {
+      publisher_->delete_datawriter(writer_);
+    }
+    if (publisher_ != nullptr) {
+      participant_->delete_publisher(publisher_);
+    }
+    if (topic_ != nullptr) {
+      participant_->delete_topic(topic_);
+    }
+    eprosima::fastdds::dds::DomainParticipantFactory::get_instance()->delete_participant(participant_);
+  }
 
     bool init();
 
