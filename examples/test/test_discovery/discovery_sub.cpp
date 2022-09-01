@@ -14,21 +14,40 @@
 #include "fastdds/dds/subscriber/Subscriber.hpp"
 #include "fastdds/dds/subscriber/qos/DataReaderQos.hpp"
 
-#include "include/hw_sub.h"
-
+#include "include/discovery_sub.h"
 
 using namespace eprosima::fastdds::dds;
+using namespace eprosima::fastrtps::rtps;
 
+bool ZombieSub::init() {
 
+  // Get default participant QoS
+  DomainParticipantQos client_qos = PARTICIPANT_QOS_DEFAULT;
 
-bool HWSub::init() {
-  //CREATE THE PARTICIPANT
-  DomainParticipantQos pqos;
-  pqos.name("Participant_sub");
-  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
-//  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
+  // Set participant as CLIENT
+  client_qos.wire_protocol().builtin.discovery_config.discoveryProtocol =
+      DiscoveryProtocol_t::CLIENT;
 
-//  DomainParticipantFactory::get_instance()->delete_participant(participant_);
+  // Set SERVER's GUID prefix
+  RemoteServerAttributes remote_server_att;
+  remote_server_att.ReadguidPrefix("44.53.00.5f.45.50.52.4f.53.49.4d.41");
+
+  // Set SERVER's listening locator for PDP
+  Locator_t locator;
+  IPLocator::setIPv4(locator, 127, 0, 0, 1);
+  locator.port = 11811;
+  remote_server_att.metatrafficUnicastLocatorList.push_back(locator);
+
+  // Add remote SERVER to CLIENT's list of SERVERs
+  client_qos.wire_protocol().builtin.discovery_config.m_DiscoveryServers.push_back(remote_server_att);
+
+  // Set ping period to 250 ms
+  client_qos.wire_protocol().builtin.discovery_config.discoveryServer_client_syncperiod =
+      Duration_t(0, 250000000);
+
+  // Create CLIENT
+  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, client_qos);
+
 
   if (participant_ == nullptr) {
     return false;
@@ -66,7 +85,7 @@ bool HWSub::init() {
   return true;
 }
 
-void HWSub::SubListener::on_subscription_matched(
+void ZombieSub::SubListener::on_subscription_matched(
     DataReader*,
     const SubscriptionMatchedStatus& info) {
   if (info.current_count_change == 1) {
@@ -81,7 +100,7 @@ void HWSub::SubListener::on_subscription_matched(
   }
 }
 
-void HWSub::SubListener::on_data_available(
+void ZombieSub::SubListener::on_data_available(
     DataReader* reader) {
   FASTDDS_CONST_SEQUENCE(DataSeq, HW);
 
@@ -104,7 +123,7 @@ void HWSub::SubListener::on_data_available(
   }
 }
 
-HWSub loanable_hello_world_subscriber;
+ZombieSub loanable_hello_world_subscriber;
 
 void signal_handler(int sig) {
   std::cout << "signal " << sig;

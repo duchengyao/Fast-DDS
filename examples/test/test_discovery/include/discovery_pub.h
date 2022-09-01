@@ -32,11 +32,11 @@
 #include "fastdds/dds/publisher/Publisher.hpp"
 #include "fastdds/dds/topic/TypeSupport.hpp"
 
-class HWPub
+class ZombiePub
 {
 public:
 
-  HWPub()
+  ZombiePub()
       : participant_(nullptr),
         publisher_(nullptr),
         topic_(nullptr),
@@ -44,7 +44,7 @@ public:
         type_(new LoanableHelloWorldPubSubType()) {
   }
 
-  virtual ~HWPub() {
+  virtual ~ZombiePub() {
     if (writer_ != nullptr) {
       publisher_->delete_datawriter(writer_);
     }

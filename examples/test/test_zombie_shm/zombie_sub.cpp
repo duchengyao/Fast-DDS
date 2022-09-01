@@ -14,14 +14,14 @@
 #include "fastdds/dds/subscriber/Subscriber.hpp"
 #include "fastdds/dds/subscriber/qos/DataReaderQos.hpp"
 
-#include "include/hw_sub.h"
+#include "include/zombie_sub.h"
 
 
 using namespace eprosima::fastdds::dds;
 
 
 
-bool HWSub::init() {
+bool ZombieSub::init() {
   //CREATE THE PARTICIPANT
   DomainParticipantQos pqos;
   pqos.name("Participant_sub");
@@ -66,7 +66,7 @@ bool HWSub::init() {
   return true;
 }
 
-void HWSub::SubListener::on_subscription_matched(
+void ZombieSub::SubListener::on_subscription_matched(
     DataReader*,
     const SubscriptionMatchedStatus& info) {
   if (info.current_count_change == 1) {
@@ -81,7 +81,7 @@ void HWSub::SubListener::on_subscription_matched(
   }
 }
 
-void HWSub::SubListener::on_data_available(
+void ZombieSub::SubListener::on_data_available(
     DataReader* reader) {
   FASTDDS_CONST_SEQUENCE(DataSeq, HW);
 
@@ -104,7 +104,7 @@ void HWSub::SubListener::on_data_available(
   }
 }
 
-HWSub loanable_hello_world_subscriber;
+ZombieSub loanable_hello_world_subscriber;
 
 void signal_handler(int sig) {
   std::cout << "signal " << sig;

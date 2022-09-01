@@ -31,9 +31,9 @@
 #include "fastdds/dds/subscriber/DataReaderListener.hpp"
 #include "fastdds/dds/subscriber/Subscriber.hpp"
 
-class HWSub {
+class ZombieSub {
  public:
-  HWSub()
+  ZombieSub()
       : participant_(nullptr),
         subscriber_(nullptr),
         topic_(nullptr),
@@ -41,7 +41,7 @@ class HWSub {
         type_(new LoanableHelloWorldPubSubType()) {
   }
 
-  ~HWSub() {
+  ~ZombieSub() {
     if (reader_ != nullptr) {
       subscriber_->delete_datareader(reader_);
     }

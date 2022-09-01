@@ -7,7 +7,7 @@
  */
 
 
-#include "include/hw_pub.h"
+#include "include/zombie_pub.h"
 
 #include "fastdds/dds/publisher/Publisher.hpp"
 #include "fastdds/dds/publisher/qos/PublisherQos.hpp"
@@ -21,7 +21,7 @@ using namespace eprosima::fastdds::dds;
 
 
 
-bool HWPub::init() {
+bool ZombiePub::init() {
   /* Initialize data_ here */
 
   //CREATE THE PARTICIPANT
@@ -64,7 +64,7 @@ bool HWPub::init() {
   return true;
 }
 
-void HWPub::PubListener::on_publication_matched(
+void ZombiePub::PubListener::on_publication_matched(
     eprosima::fastdds::dds::DataWriter*,
     const eprosima::fastdds::dds::PublicationMatchedStatus& info) {
   if (info.current_count_change == 1) {
@@ -79,7 +79,7 @@ void HWPub::PubListener::on_publication_matched(
   }
 }
 
-void HWPub::run() {
+void ZombiePub::run() {
   std::cout << "LoanableHelloWorld DataWriter waiting for DataReaders." << std::endl;
   int msgsent = 0;
 
@@ -101,7 +101,7 @@ void HWPub::run() {
 }
 
 int main() {
-  HWPub loanable_hello_world_publisher;
+  ZombiePub loanable_hello_world_publisher;
   loanable_hello_world_publisher.init();
   loanable_hello_world_publisher.run();
 }

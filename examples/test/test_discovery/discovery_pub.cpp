@@ -7,27 +7,60 @@
  */
 
 
-#include "include/hw_pub.h"
+#include "include/discovery_pub.h"
 
 #include "fastdds/dds/publisher/Publisher.hpp"
 #include "fastdds/dds/publisher/qos/PublisherQos.hpp"
 #include "fastdds/dds/publisher/DataWriter.hpp"
 #include "fastdds/dds/publisher/qos/DataWriterQos.hpp"
+#include "fastdds/rtps/attributes/RTPSParticipantAttributes.h"
 
 #include <thread>
 #include <chrono>
 
 using namespace eprosima::fastdds::dds;
+using namespace eprosima::fastrtps::rtps;
 
-
-
-bool HWPub::init() {
+bool ZombiePub::init() {
   /* Initialize data_ here */
 
-  //CREATE THE PARTICIPANT
-  DomainParticipantQos pqos;
-  pqos.name("Participant_pub");
-  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, pqos);
+
+  // Get default participant QoS
+  DomainParticipantQos server_qos = PARTICIPANT_QOS_DEFAULT;
+
+  // Set participant as SERVER
+  server_qos.wire_protocol().builtin.discovery_config.discoveryProtocol =
+      DiscoveryProtocol_t::SERVER;
+
+  // Set SERVER's GUID prefix
+  std::istringstream("44.53.00.5f.45.50.52.4f.53.49.4d.41") >> server_qos.wire_protocol().prefix;
+
+  // Set SERVER's listening locator for PDP
+  eprosima::fastrtps::rtps::Locator_t locator;
+  IPLocator::setIPv4(locator, 127, 0, 0, 1);
+  locator.port = 11811;
+  server_qos.wire_protocol().builtin.metatrafficUnicastLocatorList.push_back(locator);
+
+  /* Add a remote serve to which this server will connect */
+  // Set remote SERVER's GUID prefix
+  RemoteServerAttributes remote_server_att;
+  remote_server_att.ReadguidPrefix("44.53.01.5f.45.50.52.4f.53.49.4d.41");
+
+  // Set remote SERVER's listening locator for PDP
+  Locator_t remote_locator;
+  IPLocator::setIPv4(remote_locator, 127, 0, 0, 1);
+  remote_locator.port = 11812;
+  remote_server_att.metatrafficUnicastLocatorList.push_back(remote_locator);
+
+  // Add remote SERVER to SERVER's list of SERVERs
+  server_qos.wire_protocol().builtin.discovery_config.m_DiscoveryServers.push_back(remote_server_att);
+
+  // Create SERVER
+  participant_ = DomainParticipantFactory::get_instance()->create_participant(0, server_qos);
+
+
+
+
   if (participant_ == nullptr) {
     return false;
   }
@@ -40,6 +73,7 @@ bool HWPub::init() {
   if (publisher_ == nullptr) {
     return false;
   }
+
 
   //CREATE THE TOPIC
   topic_ = participant_->create_topic(
@@ -64,7 +98,7 @@ bool HWPub::init() {
   return true;
 }
 
-void HWPub::PubListener::on_publication_matched(
+void ZombiePub::PubListener::on_publication_matched(
     eprosima::fastdds::dds::DataWriter*,
     const eprosima::fastdds::dds::PublicationMatchedStatus& info) {
   if (info.current_count_change == 1) {
@@ -79,7 +113,7 @@ void HWPub::PubListener::on_publication_matched(
   }
 }
 
-void HWPub::run() {
+void ZombiePub::run() {
   std::cout << "LoanableHelloWorld DataWriter waiting for DataReaders." << std::endl;
   int msgsent = 0;
 
@@ -101,7 +135,7 @@ void HWPub::run() {
 }
 
 int main() {
-  HWPub loanable_hello_world_publisher;
+  ZombiePub loanable_hello_world_publisher;
   loanable_hello_world_publisher.init();
   loanable_hello_world_publisher.run();
 }
