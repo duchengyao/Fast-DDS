@@ -28,8 +28,9 @@
 #include "fastrtps/rtps/attributes/HistoryAttributes.h"
 
 #include "fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h"
-#include "fastdds/rtps/transport/UDPv4TransportDescriptor.h"
-#include "fastdds/rtps/transport/UDPv6TransportDescriptor.h"
+#include "fastrtps/transport/UDPv4TransportDescriptor.h"
+#include "fastrtps/transport/UDPv6TransportDescriptor.h"
+#include "fastrtps/transport/TCPv4TransportDescriptor.h"
 
 #include "fastrtps/rtps/history/ReaderHistory.h"
 
@@ -72,8 +73,6 @@ bool TestReaderRegistered::init() {
 
   //CREATE READER
   ReaderAttributes ratt;
-  Locator_t loc(22222);
-  ratt.endpoint.unicastLocatorList.push_back(loc);
   mp_reader = RTPSDomain::createRTPSReader(mp_participant, ratt, mp_history, &m_listener);
   if (mp_reader == nullptr) {
     return false;

@@ -28,8 +28,9 @@
 #include "fastrtps/rtps/attributes/HistoryAttributes.h"
 
 #include "fastdds/rtps/transport/shared_mem/SharedMemTransportDescriptor.h"
-#include "fastdds/rtps/transport/UDPv4TransportDescriptor.h"
-#include "fastdds/rtps/transport/UDPv6TransportDescriptor.h"
+#include "fastrtps/transport/UDPv4TransportDescriptor.h"
+#include "fastrtps/transport/UDPv6TransportDescriptor.h"
+#include "fastrtps/transport/TCPv4TransportDescriptor.h"
 
 #include "fastrtps/rtps/history/WriterHistory.h"
 
@@ -96,26 +97,17 @@ bool TestWriterRegistered::reg() {
 
 void TestWriterRegistered::run(
     uint16_t samples) {
-  cout << "Waiting for matched Readers" << endl;
-  while (m_listener.n_matched == 0) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(250));
-  }
 
-  for (int i = 0; i < 1e6; ++i) {
-    CacheChange_t* ch = mp_writer->new_change([]() -> uint32_t {
-      return 255;
-    }, ALIVE);
-    if (!ch)     // In the case history is full, remove some old changes
-    {
+  for (int i = 0; i < samples; ++i) {
+    CacheChange_t* ch = mp_writer->new_change([]() -> uint32_t { return 255; }, ALIVE);
+    // In the case history is full, remove some old changes
+    if (!ch) {
       std::cout << "cleaning history...";
       mp_writer->remove_older_changes(20);
-      ch = mp_writer->new_change([]() -> uint32_t {
-        return 255;
-      }, ALIVE);
+      ch = mp_writer->new_change([]() -> uint32_t { return 255; }, ALIVE);
     }
 
-    ch->serializedPayload.length =
-        sprintf((char*) ch->serializedPayload.data, "My example string %d", i) + 1;
+    ch->serializedPayload.length = sprintf((char*) ch->serializedPayload.data, "My example string %d", i) + 1;
 
     printf("Sending: %s\n", (char*) ch->serializedPayload.data);
     mp_history->add_change(ch);

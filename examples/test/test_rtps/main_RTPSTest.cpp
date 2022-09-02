@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <stdio.h>
 #include <cstring>
 #include <iostream>
 #include <iomanip>
@@ -31,60 +30,46 @@ using namespace fastrtps;
 using namespace rtps;
 using namespace std;
 
-
 int main(
-        int argc,
-        char** argv)
-{
-    cout << "Starting RTPS example" << endl;
-    int type;
-    if (argc > 1)
-    {
-        if (strcmp(argv[1], "writer") == 0)
-        {
-            type = 1;
-        }
-        else if (strcmp(argv[1], "reader") == 0)
-        {
-            type = 2;
-        }
-        else
-        {
-            cout << "NEEDS writer OR reader as first argument" << endl;
-            return 0;
-        }
+    int argc,
+    char** argv) {
+  cout << "Starting RTPS example" << endl;
+  int type;
+  if (argc > 1) {
+    if (strcmp(argv[1], "writer") == 0) {
+      type = 1;
+    } else if (strcmp(argv[1], "reader") == 0) {
+      type = 2;
+    } else {
+      cout << "NEEDS writer OR reader as first argument" << endl;
+      return 0;
     }
-    else
-    {
-        cout << "NEEDS writer OR reader ARGUMENT" << endl;
-        cout << "RTPSTest writer" << endl;
-        cout << "RTPSTest reader" << endl;
-        return 0;
-    }
-    switch (type)
-    {
-        case 1:
-        {
-            TestWriterRegistered TW;
-            if (TW.init() && TW.reg())
-            {
-                TW.run(10);
-            }
-            break;
-        }
-        case 2:
-        {
-            TestReaderRegistered TR;
-            if (TR.init() && TR.reg())
-            {
-                TR.run();
-            }
-            break;
-        }
-    }
-
-    RTPSDomain::stopAll();
-    cout << "EVERYTHING STOPPED FINE" << endl;
-
+  } else {
+    cout << "NEEDS writer OR reader ARGUMENT" << endl;
+    cout << "RTPSTest writer" << endl;
+    cout << "RTPSTest reader" << endl;
     return 0;
+  }
+  switch (type) {
+    case 1: {
+      TestWriterRegistered TW;
+      if (TW.init() && TW.reg()) {
+        TW.run(6e4);
+      }
+      break;
+    }
+    case 2: {
+      TestReaderRegistered TR;
+      if (TR.init() && TR.reg()) {
+        TR.run();
+      }
+      break;
+    }
+    default:;
+  }
+
+  RTPSDomain::stopAll();
+  cout << "EVERYTHING STOPPED FINE" << endl;
+
+  return 0;
 }
