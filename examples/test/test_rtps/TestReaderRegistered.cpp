@@ -57,9 +57,7 @@ bool TestReaderRegistered::init() {
   PParam.builtin.use_WriterLivelinessProtocol = true;
   PParam.useBuiltinTransports = false;
 
-//    auto transport = std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
   auto transport = std::make_shared<eprosima::fastdds::rtps::SharedMemTransportDescriptor>();
-
   PParam.userTransports.push_back(transport);
 
   mp_participant = RTPSDomain::createParticipant(0, PParam);
@@ -78,10 +76,6 @@ bool TestReaderRegistered::init() {
     return false;
   }
 
-  return true;
-}
-
-bool TestReaderRegistered::reg() {
   std::cout << "Registering Reader" << std::endl;
   TopicAttributes Tatt;
   Tatt.topicKind = NO_KEY;
@@ -91,10 +85,6 @@ bool TestReaderRegistered::reg() {
   return mp_participant->registerReader(mp_reader, Tatt, Rqos);
 }
 
-void TestReaderRegistered::run() {
-  printf("Press Enter to stop the Reader.\n");
-  std::cin.ignore();
-}
 
 void TestReaderRegistered::MyListener::onNewCacheChangeAdded(
     RTPSReader* reader,

@@ -58,9 +58,7 @@ bool TestWriterRegistered::init() {
   PParam.builtin.use_WriterLivelinessProtocol = true;
   PParam.useBuiltinTransports = false;
 
-//    auto transport = std::make_shared<eprosima::fastdds::rtps::UDPv4TransportDescriptor>();
   auto transport = std::make_shared<eprosima::fastdds::rtps::SharedMemTransportDescriptor>();
-
   PParam.userTransports.push_back(transport);
 
   mp_participant = RTPSDomain::createParticipant(0, PParam);
@@ -71,7 +69,7 @@ bool TestWriterRegistered::init() {
   //CREATE WRITERHISTORY
   HistoryAttributes hatt;
   hatt.payloadMaxSize = 255;
-  hatt.maximumReservedCaches = 50;
+//  hatt.maximumReservedCaches = 50;
   mp_history = new WriterHistory(hatt);
 
   //CREATE WRITER
@@ -82,10 +80,6 @@ bool TestWriterRegistered::init() {
     return false;
   }
 
-  return true;
-}
-
-bool TestWriterRegistered::reg() {
   cout << "Registering Writer" << endl;
   TopicAttributes Tatt;
   Tatt.topicKind = NO_KEY;
@@ -94,6 +88,7 @@ bool TestWriterRegistered::reg() {
   WriterQos Wqos;
   return mp_participant->registerWriter(mp_writer, Tatt, Wqos);
 }
+
 
 void TestWriterRegistered::run(
     uint16_t samples) {

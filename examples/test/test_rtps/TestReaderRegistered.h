@@ -22,52 +22,47 @@
 
 #include "fastrtps/rtps/rtps_fwd.h"
 
-
 #include "fastrtps/rtps/reader/ReaderListener.h"
 
-class TestReaderRegistered
-{
-public:
+class TestReaderRegistered {
+ public:
 
-    TestReaderRegistered();
-    virtual ~TestReaderRegistered();
-    eprosima::fastrtps::rtps::RTPSParticipant* mp_participant;
-    eprosima::fastrtps::rtps::RTPSReader* mp_reader;
-    eprosima::fastrtps::rtps::ReaderHistory* mp_history;
-    bool init(); //Initialization
-    bool reg(); //Register
-    void run(); //Run
-    class MyListener : public eprosima::fastrtps::rtps::ReaderListener
-    {
-    public:
+  TestReaderRegistered();
+  virtual ~TestReaderRegistered();
+  eprosima::fastrtps::rtps::RTPSParticipant* mp_participant;
+  eprosima::fastrtps::rtps::RTPSReader* mp_reader;
+  eprosima::fastrtps::rtps::ReaderHistory* mp_history;
+  bool init(); //Initialization
+  bool reg() { return true; } //Register
+  void run() {
+    printf("Press Enter to stop the Reader.\n");
+    std::cin.ignore();
+  }
+  class MyListener : public eprosima::fastrtps::rtps::ReaderListener {
+   public:
 
-        MyListener()
-            : n_received(0)
-            , n_matched(0)
-        {
-        }
-
-        ~MyListener()
-        {
-        }
-
-        void onNewCacheChangeAdded(
-                eprosima::fastrtps::rtps::RTPSReader* reader,
-                const eprosima::fastrtps::rtps::CacheChange_t* const change) override;
-        void onReaderMatched(
-                eprosima::fastrtps::rtps::RTPSReader*,
-                eprosima::fastrtps::rtps::MatchingInfo& info) override
-        {
-            if (info.status == eprosima::fastrtps::rtps::MATCHED_MATCHING)
-            {
-                n_matched++;
-            }
-        }
-
-        uint32_t n_received;
-        uint32_t n_matched;
+    MyListener()
+        : n_received(0), n_matched(0) {
     }
-    m_listener;
+
+    ~MyListener() {
+    }
+
+    void onNewCacheChangeAdded(
+        eprosima::fastrtps::rtps::RTPSReader* reader,
+        const eprosima::fastrtps::rtps::CacheChange_t* const change) override;
+    void onReaderMatched(
+        eprosima::fastrtps::rtps::RTPSReader*,
+        eprosima::fastrtps::rtps::MatchingInfo& info) override {
+      if (info.status == eprosima::fastrtps::rtps::MATCHED_MATCHING) {
+        n_matched++;
+      }
+    }
+
+    uint32_t n_received;
+    uint32_t n_matched;
+  }
+      m_listener;
 };
 
 #endif /* TESTREADER_H_ */

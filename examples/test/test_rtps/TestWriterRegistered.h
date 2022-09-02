@@ -22,48 +22,40 @@
 
 #include "fastrtps/rtps/rtps_fwd.h"
 
-
 #include "fastrtps/rtps/writer/WriterListener.h"
 
-class TestWriterRegistered
-{
-public:
+class TestWriterRegistered {
+ public:
 
-    TestWriterRegistered();
-    virtual ~TestWriterRegistered();
-    eprosima::fastrtps::rtps::RTPSParticipant* mp_participant;
-    eprosima::fastrtps::rtps::RTPSWriter* mp_writer;
-    eprosima::fastrtps::rtps::WriterHistory* mp_history;
-    bool init(); //Initialize writer
-    bool reg(); //Register the Writer
-    void run(
-            uint16_t samples);  //Run the Writer
-    class MyListener : public eprosima::fastrtps::rtps::WriterListener
-    {
-    public:
+  TestWriterRegistered();
+  virtual ~TestWriterRegistered();
+  eprosima::fastrtps::rtps::RTPSParticipant* mp_participant;
+  eprosima::fastrtps::rtps::RTPSWriter* mp_writer;
+  eprosima::fastrtps::rtps::WriterHistory* mp_history;
+  bool init(); //Initialize writer
+  bool reg() { return true; } //Register
+  void run(uint16_t samples);  //Run the Writer
+  class MyListener : public eprosima::fastrtps::rtps::WriterListener {
+   public:
 
-        MyListener()
-            : n_matched(0)
-        {
-        }
-
-        ~MyListener()
-        {
-        }
-
-        void onWriterMatched(
-                eprosima::fastrtps::rtps::RTPSWriter*,
-                eprosima::fastrtps::rtps::MatchingInfo& info) override
-        {
-            if (info.status == eprosima::fastrtps::rtps::MATCHED_MATCHING)
-            {
-                ++n_matched;
-            }
-        }
-
-        int n_matched;
+    MyListener()
+        : n_matched(0) {
     }
-    m_listener;
+
+    ~MyListener() {
+    }
+
+    void onWriterMatched(
+        eprosima::fastrtps::rtps::RTPSWriter*,
+        eprosima::fastrtps::rtps::MatchingInfo& info) override {
+      if (info.status == eprosima::fastrtps::rtps::MATCHED_MATCHING) {
+        ++n_matched;
+      }
+    }
+
+    int n_matched;
+  }
+      m_listener;
 };
 
 #endif /* TESTWRITER_H_ */
