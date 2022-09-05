@@ -15,8 +15,6 @@
 set(fastrtps_FOUND TRUE)
 
 add_subdirectory(test/test_rtps)
-add_subdirectory(test/test_zombie_shm)
-add_subdirectory(test/simple_discovery)
 #add_subdirectory(test/rtps_shm)
 add_subdirectory(test/test_boost)
 
