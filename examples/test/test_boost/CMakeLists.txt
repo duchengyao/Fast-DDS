@@ -16,5 +16,19 @@ cmake_minimum_required(VERSION 3.16.3)
 
 project(DDSZeroCopyExample VERSION 1 LANGUAGES CXX)
 
-add_executable(test_boost main.cpp)
-target_link_libraries(test_boost fastrtps fastcdr)
+add_executable(test_boost_reader reader.cc)
+target_include_directories(test_boost_reader PRIVATE ${THIRDPARTY_BOOST_INCLUDE_DIR})
+target_link_libraries(test_boost_reader fastrtps fastcdr)
+
+add_executable(test_boost_writer writer.cc)
+target_include_directories(test_boost_writer PRIVATE ${THIRDPARTY_BOOST_INCLUDE_DIR})
+target_link_libraries(test_boost_writer fastrtps fastcdr ${THIRDPARTY_BOOST_LINK_LIBS})
+
+
+add_executable(test_boost_reader_1.8 reader.cc)
+target_include_directories(test_boost_reader_1.8 PRIVATE ../boost_1_80_0)
+target_link_libraries(test_boost_reader_1.8 fastrtps fastcdr)
+
+add_executable(test_boost_writer_1.8 writer.cc)
+target_include_directories(test_boost_writer_1.8 PRIVATE ../boost_1_80_0)
+target_link_libraries(test_boost_writer_1.8 fastrtps fastcdr)
