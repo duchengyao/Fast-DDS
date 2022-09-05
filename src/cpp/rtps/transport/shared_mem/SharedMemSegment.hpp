@@ -36,7 +36,7 @@ using Log = fastdds::dds::Log;
  * Provides shared memory functionallity abstrating from
  * lower level layers
  */
-class SharedMemSegment
+class  SharedMemSegment
 {
 public:
 

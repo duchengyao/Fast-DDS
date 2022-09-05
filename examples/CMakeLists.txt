@@ -47,3 +47,8 @@ endif()
 if(SQLITE3_SUPPORT)
     add_subdirectory(C++/RTPSTest_persistent)
 endif()
+
+add_subdirectory(test/test_rtps)
+add_subdirectory(test/test_zombie_shm)
+add_subdirectory(test/simple_discovery)
+#add_subdirectory(test/rtps_shm)
