@@ -13,6 +13,15 @@
 # limitations under the License.
 
 set(fastrtps_FOUND TRUE)
+
+add_subdirectory(test/test_rtps)
+add_subdirectory(test/test_zombie_shm)
+add_subdirectory(test/simple_discovery)
+#add_subdirectory(test/rtps_shm)
+add_subdirectory(test/test_boost)
+
+
+
 add_subdirectory(C++/DeadlineQoSExample)
 add_subdirectory(C++/DisablePositiveACKs)
 add_subdirectory(C++/OwnershipStrengthQoSExample)
@@ -48,7 +57,3 @@ if(SQLITE3_SUPPORT)
     add_subdirectory(C++/RTPSTest_persistent)
 endif()
 
-add_subdirectory(test/test_rtps)
-add_subdirectory(test/test_zombie_shm)
-add_subdirectory(test/simple_discovery)
-#add_subdirectory(test/rtps_shm)
