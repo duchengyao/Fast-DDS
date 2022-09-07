@@ -48,20 +48,14 @@ public:
 
     using allocator_type = foonathan::memory::memory_pool<foonathan::memory::node_pool, RawAllocator>;
 
-    node_segregator(
-            std::size_t nodes_to_allocate,
-            const bool& flag,
-            std::size_t padding = foonathan::memory::detail::memory_block_stack::implementation_offset)
-        : block_size_(nodes_to_allocate
-                * ((node_size > allocator_type::min_node_size ? node_size : allocator_type::min_node_size)
-                // Needs more space in debug info. It allocates space to detect overflow.
-                * (foonathan::memory::detail::debug_fence_size ? 3 : 1))
-                + padding)
-        , node_allocator_(new allocator_type(node_size, block_size_))
-        , initialization_is_done_(flag)
-    {
-    }
-
+  node_segregator(
+      std::size_t nodes_to_allocate,
+      const bool& flag)
+      : block_size_(allocator_type::min_block_size(node_size, nodes_to_allocate))
+      , node_allocator_(new allocator_type(node_size, block_size_))
+      , initialization_is_done_(flag)
+  {
+  }
     node_segregator(
             node_segregator&& s)
         : block_size_(s.block_size_)

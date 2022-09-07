@@ -21,6 +21,7 @@
 
 #include <rtps/transport/shared_mem/SharedMemSegment.hpp>
 #include <rtps/transport/shared_mem/MultiProducerConsumerRingBuffer.hpp>
+#include <rtps/transport/shared_mem/RobustExclusiveLock.hpp>
 
 #define THREADID "(ID:" << std::this_thread::get_id() <<") "
 
@@ -37,16 +38,12 @@ class SharedMemGlobal
 public:
 
     struct BufferDescriptor;
-    typedef std::function<void(const std::vector<
-                const SharedMemGlobal::BufferDescriptor*>&,
-                const std::string& domain_name)> PortFailureHandler;
 
     // Long names for SHM files could cause problems on some platforms
     static constexpr uint32_t MAX_DOMAIN_NAME_LENGTH = 16; 
 
     SharedMemGlobal(
-        const std::string& domain_name,
-        PortFailureHandler failure_handler)
+        const std::string& domain_name)
         : domain_name_(domain_name)
     {
         if (domain_name.length() > MAX_DOMAIN_NAME_LENGTH)
@@ -57,13 +54,6 @@ public:
                     std::to_string(MAX_DOMAIN_NAME_LENGTH) +
                     " characters");
         }
-
-        Port::on_failure_buffer_descriptors_handler(failure_handler);
-    }
-
-    ~SharedMemGlobal()
-    {
-
     }
 
     /**
@@ -80,7 +70,7 @@ public:
     typedef MultiProducerConsumerRingBuffer<BufferDescriptor>::Listener Listener;
     typedef MultiProducerConsumerRingBuffer<BufferDescriptor>::Cell PortCell;
 
-    static const uint32_t CURRENT_ABI_VERSION = 3;
+    static const uint32_t CURRENT_ABI_VERSION = 5;
 
     struct PortNode
     {
@@ -139,6 +129,8 @@ public:
 
         uint64_t overflows_count_;
 
+        std::unique_ptr<RobustExclusiveLock> read_exclusive_lock_;
+
         inline void notify_unicast(
                 bool was_buffer_empty_before_push)
         {
@@ -172,30 +164,6 @@ public:
             {
                 static Watchdog watch_dog;
                 return watch_dog;
-            }
-
-            /**
-             * Sets the on_failure_buffer_descriptors_handler_.
-             * This is done only the first time the function is called,
-             * as the handler must be a static inmutable function.
-             */
-            void on_failure_buffer_descriptors_handler(
-                    std::function<void(const std::vector<
-                        const BufferDescriptor*>&,
-                    const std::string& domain_name)> handler)
-            {
-                if (!is_on_failure_buffer_descriptors_handler_set_)
-                {
-                    std::lock_guard<std::mutex> lock(watched_ports_mutex_);
-
-                    // Checking is_on_failure_buffer_descriptors_handler_set_ twice can be weird but avoid
-                    // the use of a recursive_mutex here.
-                    if (!is_on_failure_buffer_descriptors_handler_set_)
-                    {
-                        on_failure_buffer_descriptors_handler_ = handler;
-                        is_on_failure_buffer_descriptors_handler_set_ = true;
-                    }
-                }
             }
 
             /**
@@ -256,16 +224,9 @@ public:
 
             bool exit_thread_;
 
-            std::function<void(
-                        const std::vector<const BufferDescriptor*>&,
-                        const std::string& domain_name)> on_failure_buffer_descriptors_handler_;
-
-            bool is_on_failure_buffer_descriptors_handler_set_;
-
             Watchdog()
                 : wake_run_(false)
                 , exit_thread_(false)
-                , is_on_failure_buffer_descriptors_handler_set_(false)
             {
                 thread_run_ = std::thread(&Watchdog::run, this);
             }
@@ -343,10 +304,6 @@ public:
                                     if ((*port_it)->node->is_port_ok)
                                     {
                                         (*port_it)->node->is_port_ok = false;
-                                        (*port_it)->buffer->copy(&descriptors_enqueued);
-                                        assert(on_failure_buffer_descriptors_handler_);
-                                        on_failure_buffer_descriptors_handler_(descriptors_enqueued,
-                                                (*port_it)->node->domain_name);
                                     }
                                 }
 
@@ -449,7 +406,7 @@ public:
             Watchdog::get().remove_port_from_watch(node_);
 
             if (node_->ref_counter.fetch_sub(1) == 1 && node_->is_port_ok)
-            {                
+            {
                 auto segment_name = port_segment_->name();
 
                 logInfo(RTPS_TRANSPORT_SHM, THREADID << "Port " << node_->port_id
@@ -468,15 +425,6 @@ public:
                 SharedMemSegment::remove(segment_name.c_str());
                 SharedMemSegment::named_mutex::remove((segment_name + "_mutex").c_str());
             }
-        }
-
-        static void on_failure_buffer_descriptors_handler(
-                std::function<void(
-                    const std::vector<const BufferDescriptor*>&,
-                    const std::string& domain_name)> handler)
-
-        {
-            Watchdog::get().on_failure_buffer_descriptors_handler(handler);
         }
 
         /**
@@ -626,6 +574,7 @@ public:
          * This function is used when destroying a listener waiting for messages
          * in the port.
          * @param is_listener_closed pointer to the atomic is_closed flag of the Listener object.
+         * @throw std::exception on error
          */
         void close_listener(
                 std::atomic<bool>* is_listener_closed)
@@ -659,7 +608,7 @@ public:
          * @return A shared_ptr to the listener.
          * The listener will be unregistered when shared_ptr is destroyed.
          */
-        std::shared_ptr<Listener> create_listener(uint32_t* listener_index)
+        std::unique_ptr<Listener> create_listener(uint32_t* listener_index)
         {
             std::lock_guard<SharedMemSegment::mutex> lock(node_->empty_cv_mutex);
 
@@ -672,11 +621,28 @@ public:
          * Decrement the number of listeners by one
          * @throw std::exception when error
          */
-        void unregister_listener()
+        void unregister_listener(std::unique_ptr<Listener>* listener)
         {
-            std::lock_guard<SharedMemSegment::mutex> lock(node_->empty_cv_mutex);
+            try
+            {
+                std::lock_guard<SharedMemSegment::mutex> lock(node_->empty_cv_mutex);
 
-            node_->num_listeners--;
+                (*listener).reset();
+                node_->num_listeners--;
+            }
+            catch(const std::exception&)
+            {
+                // The port is not OK
+                if(node_->is_port_ok)
+                {
+                    node_->is_port_ok = false;
+                }
+
+                (*listener).reset();
+                node_->num_listeners--;
+
+                throw;
+            }
         }
 
         /**
@@ -718,9 +684,22 @@ public:
 
             if (!is_check_ok || !node_->is_port_ok)
             {
+                node_->is_port_ok = false;
                 throw std::runtime_error("healthy_check failed");
             }
         }
+
+        void lock_read_exclusive()
+        {
+            std::string lock_name = std::string(node_->domain_name) + "_port" + std::to_string(node_->port_id) + "_el";
+            read_exclusive_lock_ = std::unique_ptr<RobustExclusiveLock>(new RobustExclusiveLock(lock_name));
+        }
+
+        void unlock_read_exclusive()
+        {
+            read_exclusive_lock_.reset();
+        }
+
     }; // Port
 
     /**
@@ -732,27 +711,86 @@ public:
      * @param [in] healthy_check_timeout_ms Timeout for healthy check test
      * @param [in] open_mode Can be ReadShared, ReadExclusive or Write (see Port::OpenMode enum).
      *
+     * @return A shared_ptr to the new port or nullptr if the open_mode is ReadExclusive and the port_id is already opened.
      * @remarks This function performs a test to validate whether the existing port is OK, if the test
      * goes wrong the existing port is removed from shared-memory and a new port is created.
      */
     std::shared_ptr<Port> open_port(
-            uint32_t port_id,
-            uint32_t max_buffer_descriptors,
-            uint32_t healthy_check_timeout_ms,
-            Port::OpenMode open_mode = Port::OpenMode::ReadShared)
-    {        
+        uint32_t port_id,
+        uint32_t max_buffer_descriptors,
+        uint32_t healthy_check_timeout_ms,
+        Port::OpenMode open_mode = Port::OpenMode::ReadShared)
+    {
+        return open_port_internal(port_id, max_buffer_descriptors, healthy_check_timeout_ms, open_mode, nullptr);
+    }
+
+    /**
+     * Delete the port and open a new one with the same ID.
+     * It is used when a port has been marked as not OK.
+     * @return A shared_ptr to the new port
+     * @throw std::exception on error
+     */
+    std::shared_ptr<Port> regenerate_port(std::shared_ptr<Port> port, SharedMemGlobal::Port::OpenMode open_mode)
+    {
+        return open_port_internal(
+            port->port_id(),
+            port->max_buffer_descriptors(),
+            port->healthy_check_timeout_ms(),
+            open_mode,
+            port);
+    }
+
+    /**
+     * Remove a port from the system.
+     */
+    void remove_port(
+            uint32_t port_id)
+    {
+        auto port_segment_name = domain_name_ + "_port" + std::to_string(port_id);
+        SharedMemSegment::remove(port_segment_name.c_str());
+    }
+
+    std::string domain_name()
+    {
+        return domain_name_;
+    }
+
+private:
+
+    std::string domain_name_;
+
+    std::shared_ptr<Port> open_port_internal(
+        uint32_t port_id,
+        uint32_t max_buffer_descriptors,
+        uint32_t healthy_check_timeout_ms,
+        Port::OpenMode open_mode,
+        std::shared_ptr<Port> regenerating_port)
+    {
         std::string err_reason;
         std::shared_ptr<Port> port;
 
         auto port_segment_name = domain_name_ + "_port" + std::to_string(port_id);
 
-        logInfo(RTPS_TRANSPORT_SHM, THREADID << "Opening " 
+        logInfo(RTPS_TRANSPORT_SHM, THREADID << "Opening "
             << port_segment_name);
 
         std::unique_ptr<SharedMemSegment::named_mutex> port_mutex =
-                SharedMemSegment::open_or_create_and_lock_named_mutex(port_segment_name + "_mutex");
+            SharedMemSegment::open_or_create_and_lock_named_mutex(port_segment_name + "_mutex");
 
         std::unique_lock<SharedMemSegment::named_mutex> port_lock(*port_mutex, std::adopt_lock);
+
+        if (regenerating_port)
+        {
+            try
+            {
+                regenerating_port->unlock_read_exclusive();
+            }
+            catch (std::exception & e)
+            {
+                logError(RTPS_TRANSPORT_SHM, THREADID << "Port "
+                    << port_id << " failed unlock_read_exclusive " << e.what());
+            }
+        }
 
         try
         {
@@ -767,7 +805,7 @@ public:
                 port_node = port_segment->get().find<PortNode>(
                     ("port_node_abi" + std::to_string(CURRENT_ABI_VERSION)).c_str()).first;
 
-                if(port_node)
+                if (port_node)
                 {
                     port = std::make_shared<Port>(std::move(port_segment), port_node);
                 }
@@ -775,7 +813,6 @@ public:
                 {
                     throw std::runtime_error("port_abi not compatible");
                 }
-                
             }
             catch (std::exception&)
             {
@@ -792,40 +829,57 @@ public:
 
             try
             {
-                port->healthy_check();
-
-                if ( (port_node->is_opened_read_exclusive && open_mode != Port::OpenMode::Write) ||
-                        (port_node->is_opened_for_reading && open_mode == Port::OpenMode::ReadExclusive))
+                if (open_mode == Port::OpenMode::ReadExclusive)
                 {
-                    std::stringstream ss;
+                    try
+                    {
+                        port->lock_read_exclusive();
+                    }
+                    catch (const std::exception&)
+                    {
+                        std::stringstream ss;
 
-                    ss << port_node->port_id << " (" << port_node->uuid.to_string() <<
-                                        ") because is already opened ReadExclusive";
+                        ss << port_node->port_id << " (" << port_node->uuid.to_string() <<
+                            ") because is ReadExclusive locked";
 
-                    err_reason = ss.str();
-                    port.reset();
+                        err_reason = ss.str();
+                        port.reset();
+                    }
                 }
-                else
+
+                if (port)
                 {
+                    port->healthy_check();
+
                     port_node->is_opened_read_exclusive |= (open_mode == Port::OpenMode::ReadExclusive);
                     port_node->is_opened_for_reading |= (open_mode != Port::OpenMode::Write);
 
                     logInfo(RTPS_TRANSPORT_SHM, THREADID << "Port "
-                                                         << port_node->port_id << " (" << port_node->uuid.to_string() <<
-                                        ") Opened" << Port::open_mode_to_string(open_mode));
+                        << port_node->port_id << " (" << port_node->uuid.to_string() <<
+                        ") Opened" << Port::open_mode_to_string(open_mode));
                 }
             }
             catch (std::exception&)
             {
+                try
+                {
+                    port->unlock_read_exclusive();
+                }
+                catch (std::exception & e)
+                {
+                    logError(RTPS_TRANSPORT_SHM, THREADID << "Port "
+                        << port_id << " failed unlock_read_exclusive " << e.what());
+                }
+
                 auto port_uuid = port_node->uuid.to_string();
-                
+
                 logWarning(RTPS_TRANSPORT_SHM, THREADID << "Existing Port "
-                                                        << port_id << " (" << port_uuid << ") NOT Healthy.");           
+                    << port_id << " (" << port_uuid << ") NOT Healthy.");
 
                 SharedMemSegment::remove(port_segment_name.c_str());
 
                 logWarning(RTPS_TRANSPORT_SHM, THREADID << "Port "
-                                                        << port_id << " (" << port_uuid << ") Removed.");
+                    << port_id << " (" << port_uuid << ") Removed.");
 
                 throw;
             }
@@ -841,7 +895,7 @@ public:
             {
                 auto port_segment = std::unique_ptr<SharedMemSegment>(
                     new SharedMemSegment(boost::interprocess::create_only, port_segment_name.c_str(),
-                    segment_size + extra));
+                        segment_size + extra));
 
                 // Memset the whole segment to zero in order to force physical map of the buffer
                 auto payload = port_segment->get().allocate(segment_size);
@@ -850,10 +904,10 @@ public:
 
                 port = init_port(port_id, port_segment, max_buffer_descriptors, open_mode, healthy_check_timeout_ms);
             }
-            catch (std::exception& e)
+            catch (std::exception & e)
             {
                 logError(RTPS_TRANSPORT_SHM, "Failed to create port segment " << port_segment_name
-                                                                              << ": " << e.what());
+                    << ": " << e.what());
 
                 throw;
             }
@@ -866,20 +920,6 @@ public:
 
         return port;
     }
-
-    /**
-     * Remove a port from the system.
-     */
-    void remove_port(
-            uint32_t port_id)
-    {
-        auto port_segment_name = domain_name_ + "_port" + std::to_string(port_id);
-        SharedMemSegment::remove(port_segment_name.c_str());
-    }
-
-private:
-
-    std::string domain_name_;
 
     std::shared_ptr<Port> init_port(
             uint32_t port_id,
@@ -932,10 +972,6 @@ private:
             port_node->buffer_node = segment->get_offset_from_address(buffer_node);
 
             port = std::make_shared<Port>(std::move(segment), port_node);
-
-            logInfo(RTPS_TRANSPORT_SHM, THREADID << "Port "
-                << port_node->port_id << " (" << port_node->uuid.to_string() 
-                << Port::open_mode_to_string(open_mode) << ") Created.");
         }
         catch (const std::exception&)
         {
@@ -951,6 +987,22 @@ private:
 
             throw;
         }
+
+        if(open_mode == Port::OpenMode::ReadExclusive)
+        {
+            try
+            {
+                port->lock_read_exclusive();
+            }
+            catch(const std::exception&)
+            {
+                port.reset();
+            }
+        }
+
+        logInfo(RTPS_TRANSPORT_SHM, THREADID << "Port "
+                << port_node->port_id << " (" << port_node->uuid.to_string() 
+                << Port::open_mode_to_string(open_mode) << ") Created.");
 
         return port;
     }

@@ -143,11 +143,11 @@ void HelloWorldPublisher::runThread(
             {
                 --i;
             }
-            else
-            {
-                std::cout << "Message: " << m_Hello->message() << " with index: " << m_Hello->index() << " SENT" <<
-                        std::endl;
-            }
+//            else
+//            {
+//                std::cout << "Message: " << m_Hello->message() << " with index: " << m_Hello->index() << " SENT" <<
+//                        std::endl;
+//            }
             std::this_thread::sleep_for(std::chrono::milliseconds(sleep));
         }
     }
