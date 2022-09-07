@@ -173,15 +173,15 @@ private:
     {
         auto fd = open(file_path.c_str(), O_RDONLY, 0666);
 
-        if (fd != -1)
-        {
-            *was_lock_created = false;
-        }
-        else
-        {
+//        if (fd != -1)
+//        {
+//            *was_lock_created = false;
+//        }
+//        else
+//        {
             *was_lock_created = true;
             fd = open(file_path.c_str(), O_CREAT | O_RDONLY, 0666);
-        }
+//        }
 
         if (fd == -1)
         {
